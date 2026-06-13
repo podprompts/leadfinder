@@ -1,0 +1,158 @@
+.shell {
+  min-height: 100vh;
+  background: var(--black);
+  color: #fff;
+  padding: 1.75rem 2rem;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+  gap: 1rem;
+}
+.backLink {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--coral);
+  text-decoration: none;
+  display: inline-block;
+  margin-bottom: 0.5rem;
+}
+.backLink:hover { text-decoration: underline; }
+.title { font-size: 1.8rem; font-weight: 800; letter-spacing: -0.02em; }
+.sub { font-size: 0.8rem; color: rgba(255,255,255,0.4); margin-top: 0.2rem; }
+
+.refreshBtn {
+  padding: 9px 16px;
+  background: transparent;
+  border: 1px solid rgba(255,255,255,0.18);
+  color: rgba(255,255,255,0.7);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  cursor: pointer;
+  transition: all 0.12s;
+}
+.refreshBtn:hover:not(:disabled) { border-color: var(--coral); color: #fff; }
+.refreshBtn:disabled { opacity: 0.5; cursor: default; }
+
+.statusBar { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 1rem; }
+.statusPill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  padding: 7px 13px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.14);
+  background: transparent;
+  color: rgba(255,255,255,0.6);
+  cursor: pointer;
+  transition: all 0.12s;
+}
+.statusPill:hover { border-color: rgba(255,255,255,0.3); color: #fff; }
+.statusPillOn { background: var(--coral); border-color: var(--coral); color: #fff; font-weight: 600; }
+.count {
+  font-size: 10px;
+  background: rgba(0,0,0,0.25);
+  padding: 1px 6px;
+  border-radius: 999px;
+}
+
+.searchInput {
+  width: 100%;
+  max-width: 360px;
+  padding: 9px 12px;
+  background: var(--black-3, #161616);
+  border: 1px solid rgba(255,255,255,0.12);
+  color: #fff;
+  font-size: 13px;
+  outline: none;
+  margin-bottom: 1.25rem;
+}
+.searchInput:focus { border-color: var(--coral); }
+
+.empty, .notConfigured {
+  text-align: center;
+  margin: 12vh auto 0;
+  max-width: 420px;
+  color: rgba(255,255,255,0.6);
+}
+.notConfigured h2 { font-size: 1.3rem; color: #fff; margin-bottom: 0.6rem; }
+.notConfigured code {
+  background: rgba(255,255,255,0.08);
+  padding: 1px 6px;
+  border-radius: 3px;
+  font-size: 0.85em;
+}
+.empty p { margin-bottom: 1rem; line-height: 1.6; }
+
+.tableWrap { border: 1px solid rgba(255,255,255,0.08); overflow-x: auto; }
+.table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.table thead th {
+  text-align: left;
+  padding: 11px 14px;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: rgba(255,255,255,0.4);
+  font-weight: 600;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.02);
+  position: sticky;
+  top: 0;
+}
+.table tbody td {
+  padding: 11px 14px;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+  vertical-align: top;
+}
+.table tbody tr:hover { background: rgba(255,255,255,0.02); }
+
+/* subtle left accent by status */
+.row_contacted { box-shadow: inset 3px 0 0 #5b8def; }
+.row_qualified { box-shadow: inset 3px 0 0 #d9a441; }
+.row_won { box-shadow: inset 3px 0 0 #3fb950; }
+.row_dead { box-shadow: inset 3px 0 0 #6e7681; opacity: 0.55; }
+
+.bizName { font-weight: 600; }
+.bizMeta { font-size: 11px; color: rgba(255,255,255,0.4); margin-top: 0.2rem; }
+
+.link { color: #ff8a5c; text-decoration: none; }
+.link:hover { text-decoration: underline; }
+.dim { color: rgba(255,255,255,0.25); }
+.extra { font-size: 11px; color: #7dd3a0; margin-top: 3px; }
+
+.statusSelect {
+  background: var(--black-3, #161616);
+  color: #fff;
+  border: 1px solid rgba(255,255,255,0.16);
+  padding: 5px 8px;
+  font-size: 12px;
+  cursor: pointer;
+  outline: none;
+}
+.statusSelect:focus { border-color: var(--coral); }
+
+.notesInput {
+  width: 100%;
+  min-width: 160px;
+  background: transparent;
+  border: 1px solid rgba(255,255,255,0.1);
+  color: #fff;
+  padding: 6px 9px;
+  font-size: 12px;
+  outline: none;
+}
+.notesInput:focus { border-color: var(--coral); background: var(--black-3, #161616); }
+.notesInput::placeholder { color: rgba(255,255,255,0.25); }
+
+@media (max-width: 700px) {
+  .shell { padding: 1.25rem 1rem; }
+}
