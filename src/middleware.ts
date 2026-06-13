@@ -1,20 +1,22 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const PASSWORD = process.env.LEADFINDER_PASSWORD ?? "changeme";
 const COOKIE = "lf_auth";
-const COOKIE_MAX_AGE = 60 * 60 * 24 * 30; // 30 days
 
 export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
-  // Always allow the login page and its POST action
-  if (pathname === "/login") return NextResponse.next();
+  // Always allow login page and API auth route
+  if (pathname === "/login" || pathname.startsWith("/api/auth/")) {
+    return NextResponse.next();
+  }
 
-  // Check auth cookie
-  const token = req.cookies.get(COOKIE)?.value;
-  if (token === PASSWORD) return NextResponse.next();
+  const expected = (process.env.LEADFINDER_PASSWORD ?? "").trim();
+  const token = (req.cookies.get(COOKIE)?.value ?? "").trim();
 
-  // Not authenticated — redirect to login
+  if (expected && token === expected) {
+    return NextResponse.next();
+  }
+
   const loginUrl = req.nextUrl.clone();
   loginUrl.pathname = "/login";
   loginUrl.searchParams.set("from", pathname);
