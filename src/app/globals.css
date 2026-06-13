@@ -1,0 +1,23 @@
+:root {
+  --black: #0d0d0d;
+  --black-2: #141414;
+  --black-3: #161616;
+  --coral: #e8521a;
+  --coral-light: #ff6a3d;
+  --coral-border: rgba(232,82,26,0.4);
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html, body {
+  background: var(--black);
+  color: #fff;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+a { color: inherit; }
+
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; animation: none !important; }
+}

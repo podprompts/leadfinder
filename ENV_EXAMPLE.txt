@@ -1,0 +1,8 @@
+# ---- Optional: Supabase (saved searches + lead persistence) ----
+# The tool works fully without these. Only the "Save to database" button needs them.
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_ANON_KEY=
+
+# ---- Optional: paid data upgrade (plug and play) ----
+# Set this to enable the Google Places provider. No other code changes needed.
+GOOGLE_PLACES_API_KEY=

@@ -1,0 +1,95 @@
+-- ============================================================
+-- Lead Finder — Supabase schema
+-- Run this in the Supabase SQL editor.
+-- ============================================================
+
+-- Saved searches: one row per search the user runs
+create table if not exists lead_searches (
+  id            uuid primary key default gen_random_uuid(),
+  user_id       uuid references auth.users(id) on delete cascade,
+  location      text not null,
+  categories    text[] not null,
+  radius_miles  int not null default 25,
+  provider      text not null default 'openstreetmap',
+  result_count  int not null default 0,
+  created_at    timestamptz not null default now()
+);
+
+-- Leads: deduped business records, linked to the search that found them
+create table if not exists leads (
+  id             uuid primary key default gen_random_uuid(),
+  user_id        uuid references auth.users(id) on delete cascade,
+  search_id      uuid references lead_searches(id) on delete set null,
+
+  -- provider-stable id used for dedupe (e.g. osm:node/123, gplaces:abc)
+  source_id      text not null,
+  source         text not null,
+
+  name           text not null,
+  category       text,
+  phone          text,
+  phone_type     text,           -- mobile / landline / voip ... from validation
+  phone_valid    boolean,
+  website        text,
+  email          text,
+  address        text,
+  city           text,
+  state          text,
+  postal_code    text,
+  lat            double precision,
+  lng            double precision,
+  rating         numeric,
+  review_count   int,
+
+  -- scoring
+  score          int not null default 0,
+  tier           text not null default 'thin',  -- gold / website / phone / thin
+
+  -- enrichment results (from visiting the website)
+  enriched       boolean not null default false,
+  enriched_emails text[],
+  enriched_phones text[],
+
+  -- pipeline status the user controls
+  status         text not null default 'new',   -- new / contacted / qualified / won / dead
+  notes          text,
+
+  created_at     timestamptz not null default now(),
+  updated_at     timestamptz not null default now(),
+
+  -- dedupe: a given business (source_id) appears once per user
+  unique (user_id, source_id)
+);
+
+create index if not exists leads_user_idx     on leads(user_id);
+create index if not exists leads_search_idx   on leads(search_id);
+create index if not exists leads_tier_idx     on leads(tier);
+create index if not exists leads_status_idx   on leads(status);
+
+-- Keep updated_at fresh
+create or replace function touch_updated_at()
+returns trigger as $$
+begin
+  new.updated_at = now();
+  return new;
+end;
+$$ language plpgsql;
+
+drop trigger if exists leads_touch on leads;
+create trigger leads_touch
+  before update on leads
+  for each row execute function touch_updated_at();
+
+-- ============================================================
+-- Row Level Security: users only see their own data
+-- ============================================================
+alter table lead_searches enable row level security;
+alter table leads         enable row level security;
+
+drop policy if exists "own searches" on lead_searches;
+create policy "own searches" on lead_searches
+  for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+drop policy if exists "own leads" on leads;
+create policy "own leads" on leads
+  for all using (auth.uid() = user_id) with check (auth.uid() = user_id);

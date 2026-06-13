@@ -1,0 +1,141 @@
+/**
+ * Website enrichment.
+ *
+ * Given a business website, fetch the homepage (and a likely /contact page)
+ * and extract emails and phone numbers from the HTML. This is free — we're
+ * fetching public pages we already have URLs for — and it's the payoff of the
+ * website-first strategy: the site usually has the freshest, best-answered
+ * contact number plus an email the directory data never includes.
+ */
+
+const EMAIL_RE = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g;
+// US phone patterns: (480) 555-1234 / 480-555-1234 / 480.555.1234 / +1 480 555 1234
+const PHONE_RE =
+  /(?:\+?1[\s.-]?)?\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4}/g;
+
+// Junk emails to ignore (tracking, image assets, examples)
+const EMAIL_BLOCKLIST = [
+  "example.com",
+  "sentry.io",
+  "wixpress.com",
+  "godaddy.com",
+  ".png",
+  ".jpg",
+  ".gif",
+  ".webp",
+];
+
+export interface EnrichmentResult {
+  url: string;
+  reachable: boolean;
+  emails: string[];
+  phones: string[];
+  /** True if a contact page was found and scanned too */
+  scannedContactPage: boolean;
+  error?: string;
+}
+
+function cleanEmails(matches: string[]): string[] {
+  const set = new Set<string>();
+  for (const m of matches) {
+    const lower = m.toLowerCase();
+    if (EMAIL_BLOCKLIST.some((b) => lower.includes(b))) continue;
+    set.add(lower);
+  }
+  return [...set].slice(0, 5);
+}
+
+function cleanPhones(matches: string[]): string[] {
+  const set = new Set<string>();
+  for (const m of matches) {
+    const digits = m.replace(/\D/g, "");
+    // keep only plausible US lengths (10, or 11 starting with 1)
+    if (digits.length === 10 || (digits.length === 11 && digits.startsWith("1"))) {
+      set.add(m.trim());
+    }
+  }
+  return [...set].slice(0, 5);
+}
+
+function normalizeUrl(raw: string): string {
+  let url = raw.trim();
+  if (!/^https?:\/\//i.test(url)) url = "https://" + url;
+  return url;
+}
+
+async function fetchHtml(url: string, timeoutMs = 8000): Promise<string | null> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const res = await fetch(url, {
+      signal: controller.signal,
+      headers: {
+        "User-Agent":
+          "Mozilla/5.0 (compatible; LeadFinder/1.0; contact discovery)",
+        Accept: "text/html",
+      },
+      redirect: "follow",
+    });
+    if (!res.ok) return null;
+    const ct = res.headers.get("content-type") ?? "";
+    if (!ct.includes("text/html")) return null;
+    return await res.text();
+  } catch {
+    return null;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+function findContactLink(html: string, baseUrl: string): string | null {
+  // Look for a link whose href or text mentions "contact"
+  const linkRe = /<a[^>]+href=["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi;
+  let match: RegExpExecArray | null;
+  while ((match = linkRe.exec(html)) !== null) {
+    const href = match[1];
+    const text = match[2];
+    if (/contact/i.test(href) || /contact/i.test(text)) {
+      try {
+        return new URL(href, baseUrl).href;
+      } catch {
+        continue;
+      }
+    }
+  }
+  return null;
+}
+
+export async function enrichWebsite(rawUrl: string): Promise<EnrichmentResult> {
+  const url = normalizeUrl(rawUrl);
+  const result: EnrichmentResult = {
+    url,
+    reachable: false,
+    emails: [],
+    phones: [],
+    scannedContactPage: false,
+  };
+
+  const homeHtml = await fetchHtml(url);
+  if (!homeHtml) {
+    result.error = "Could not reach the site.";
+    return result;
+  }
+  result.reachable = true;
+
+  let combined = homeHtml;
+
+  // Try a contact page for better hit rate
+  const contactUrl = findContactLink(homeHtml, url);
+  if (contactUrl && contactUrl !== url) {
+    const contactHtml = await fetchHtml(contactUrl);
+    if (contactHtml) {
+      combined += "\n" + contactHtml;
+      result.scannedContactPage = true;
+    }
+  }
+
+  result.emails = cleanEmails(combined.match(EMAIL_RE) ?? []);
+  result.phones = cleanPhones(combined.match(PHONE_RE) ?? []);
+
+  return result;
+}
