@@ -1,3 +1,17 @@
+﻿# LeadFinder updater v8 - adds eye icon to password field.
+$ErrorActionPreference = 'Stop'
+if (-not (Test-Path 'package.json')) { Write-Host 'Run from leadfinder folder.' -ForegroundColor Red; exit 1 }
+$utf8NoBom = New-Object System.Text.UTF8Encoding($false)
+function Write-FileSafe($path, $content) {
+  $dir = Split-Path -Parent $path
+  if ($dir -and -not (Test-Path $dir)) { New-Item -ItemType Directory -Force -Path $dir | Out-Null }
+  if ((Test-Path $path) -and -not (Test-Path "$path.bak")) { Copy-Item $path "$path.bak" }
+  [System.IO.File]::WriteAllText((Join-Path (Get-Location) $path), $content, $utf8NoBom)
+  Write-Host "  updated $path" -ForegroundColor Green
+}
+
+# ---- src/app/login/page.tsx ----
+$content = @'
 "use client";
 
 import { useState, Suspense } from "react";
@@ -155,3 +169,8 @@ export default function LoginPage() {
     </Suspense>
   );
 }
+
+'@
+Write-FileSafe 'src/app/login/page.tsx' $content
+
+Write-Host 'Done. Now push to GitHub: git add . && git commit -m "Add eye icon" && git push origin master' -ForegroundColor Cyan
