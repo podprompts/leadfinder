@@ -1,3 +1,13 @@
+﻿$ErrorActionPreference = 'Stop'
+if (-not (Test-Path 'package.json')) { Write-Host 'Run from leadfinder folder.' -ForegroundColor Red; exit 1 }
+$utf8NoBom = New-Object System.Text.UTF8Encoding($false)
+function Write-FileSafe($path, $content) {
+  $dir = Split-Path -Parent $path
+  if ($dir -and -not (Test-Path $dir)) { New-Item -ItemType Directory -Force -Path $dir | Out-Null }
+  [System.IO.File]::WriteAllText((Join-Path (Get-Location) $path), $content, $utf8NoBom)
+  Write-Host "  updated $path" -ForegroundColor Green
+}
+$content = @'
 .shell {
   display: grid;
   grid-template-columns: 320px 1fr;
@@ -418,3 +428,7 @@
     min-width: 500px;
   }
 }
+
+'@
+Write-FileSafe 'src/components/dashboard.module.css' $content
+Write-Host 'Done.' -ForegroundColor Cyan
