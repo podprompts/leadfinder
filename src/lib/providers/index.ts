@@ -23,7 +23,7 @@ function register(p: LeadProvider) {
 register(new OpenStreetMapProvider());
 register(new GooglePlacesProvider());
 
-export const DEFAULT_PROVIDER_KEY = "openstreetmap";
+export const DEFAULT_PROVIDER_KEY = "google_places";
 
 export function getProvider(key?: string): LeadProvider {
   const provider = registry[key ?? DEFAULT_PROVIDER_KEY];
@@ -42,3 +42,4 @@ export function listProviders() {
     configured: p.isConfigured(),
   }));
 }
+
