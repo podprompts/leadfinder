@@ -25,7 +25,7 @@ interface GooglePlace {
  *
  * This is the "plug and play" upgrade path. The moment you set
  * GOOGLE_PLACES_API_KEY in the environment, the provider registry
- * (see index.ts) will offer this as an option — no other code changes.
+ * (see index.ts) will offer this as an option â€” no other code changes.
  *
  * Returns ratings, review counts, and high-fill phone numbers that the
  * free OSM source can't match.
@@ -104,13 +104,13 @@ export class GooglePlacesProvider implements LeadProvider {
       p.addressComponents?.find((c) => c.types.includes(type))?.shortText ?? null;
 
     return {
-      sourceId: `gplaces:${p.id}`,
+      sourceId: `gplaces:${p.id.replace(/\//g, "_")}`,
       source: this.key,
       name: p.displayName?.text ?? "Unknown",
       category,
       phone: p.nationalPhoneNumber ?? null,
       website: p.websiteUri ?? null,
-      email: null, // Places doesn't return email — enrichment step fills this
+      email: null, // Places doesn't return email â€” enrichment step fills this
       address: p.formattedAddress ?? null,
       city: comp("locality"),
       state: comp("administrative_area_level_1"),
