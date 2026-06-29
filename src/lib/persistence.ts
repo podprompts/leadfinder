@@ -2,7 +2,7 @@ import { createClient, isSupabaseConfigured } from "./supabase";
 import type { ScoredLead } from "./scoring";
 
 /**
- * Persistence — SOLO mode (no auth). Saves to one shared bucket.
+ * Persistence â€” SOLO mode (no auth). Saves to one shared bucket.
  * All functions no-op gracefully if Supabase isn't configured, so the rest
  * of the app never has to check first.
  */
@@ -45,7 +45,7 @@ export async function saveSearch(
     .select("id")
     .single();
 
-  if (searchErr || !searchRow) return { saved: 0, searchId: null };
+  if (searchErr || !searchRow) { console.error("[persistence] lf_searches insert error:", JSON.stringify(searchErr)); return { saved: 0, searchId: null }; }
   const searchId = searchRow.id;
 
   const rows = leads.map((l) => ({
@@ -80,7 +80,7 @@ export async function saveSearch(
     .from("lf_leads")
     .upsert(rows, { onConflict: "source_id", ignoreDuplicates: false });
 
-  if (leadsErr) return { saved: 0, searchId };
+  if (leadsErr) { console.error("[persistence] lf_leads upsert error:", JSON.stringify(leadsErr)); return { saved: 0, searchId }; }
   return { saved: rows.length, searchId };
 }
 
