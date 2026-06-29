@@ -28,6 +28,9 @@ export default function SavedLeads() {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [search, setSearch] = useState("");
   const [notesDraft, setNotesDraft] = useState<Record<string, string>>({});
+  const [page, setPage] = useState(1);
+  const [jumpVal, setJumpVal] = useState("");
+  const PAGE_SIZE = 20;
   const configured = isSupabaseConfigured();
 
   const load = useCallback(async () => {
@@ -59,6 +62,8 @@ export default function SavedLeads() {
     await updateLeadNotes(sourceId, notes);
   }
 
+  useEffect(() => { setPage(1); }, [statusFilter, search]);
+
   const filtered = useMemo(() => {
     return leads.filter((l) => {
       if (statusFilter !== "all" && l.status !== statusFilter) return false;
@@ -73,6 +78,9 @@ export default function SavedLeads() {
       return true;
     });
   }, [leads, statusFilter, search]);
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   const counts = useMemo(() => {
     const c: Record<string, number> = { all: leads.length };
@@ -152,7 +160,7 @@ export default function SavedLeads() {
               </tr>
             </thead>
             <tbody>
-              {filtered.map((l) => (
+              {paginated.map((l) => (
                 <tr key={l.source_id} className={styles[`row_${l.status}`] ?? ""}>
                   <td>
                     <div className={styles.bizName}>{l.name}</div>
@@ -215,6 +223,37 @@ export default function SavedLeads() {
             </tbody>
           </table>
         </div>
+      )}
+      {totalPages > 1 && (
+        <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", marginTop: "1.5rem", justifyContent: "center", flexWrap: "wrap" }}>
+          <button
+            onClick={() => setPage(p => Math.max(1, p - 1))}
+            disabled={page === 1}
+            style={{ padding: "6px 14px", background: page === 1 ? "#2a2a2a" : "#e8521a", color: "#fff", border: "none", borderRadius: "6px", cursor: page === 1 ? "not-allowed" : "pointer", opacity: page === 1 ? 0.4 : 1 }}
+          >&#8592;</button>
+          <span style={{ color: "#aaa", fontSize: "13px" }}>Page {page} of {totalPages} &middot; {filtered.length} leads</span>
+          <button
+            onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+            disabled={page === totalPages}
+            style={{ padding: "6px 14px", background: page === totalPages ? "#2a2a2a" : "#e8521a", color: "#fff", border: "none", borderRadius: "6px", cursor: page === totalPages ? "not-allowed" : "pointer", opacity: page === totalPages ? 0.4 : 1 }}
+          >&#8594;</button>
+          <input
+            type="number"
+            min={1}
+            max={totalPages}
+            value={jumpVal}
+            onChange={e => setJumpVal(e.target.value)}
+            onKeyDown={e => {
+              if (e.key === "Enter") {
+                const n = parseInt(jumpVal);
+                if (!isNaN(n) && n >= 1 && n <= totalPages) { setPage(n); setJumpVal(""); }
+              }
+            }}
+            placeholder="Go to page"
+            style={{ width: "90px", padding: "6px 10px", background: "#1a1a1a", border: "1px solid #444", borderRadius: "6px", color: "#fff", fontSize: "13px" }}
+          />
+        </div>
+      
       )}
     </div>
   );
