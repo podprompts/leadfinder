@@ -357,8 +357,7 @@ export default function Dashboard() {
         </button>
 
         <p className={styles.sourceNote}>
-          Source: OpenStreetMap (free). Drop in a Google Places key to upgrade
-          to ratings and fuller phone coverage - no other changes needed.
+          Source: Google Places. Enhanced ratings and fuller phone coverage enabled.
         </p>
       </aside>
 
