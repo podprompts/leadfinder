@@ -94,6 +94,7 @@ export default function Dashboard() {
       const data = await res.json();
       if (!res.ok) { setError(data.error ?? "Search failed."); setLoading(false); return; }
       setLeads(data.leads);
+      autoEnrichAll(data.leads);
       setResolvedLocation(data.location ?? location);
     } catch {
       setError("Something went wrong running the search.");
@@ -141,6 +142,7 @@ export default function Dashboard() {
       const data = await res.json();
       if (!res.ok) { setError(data.error ?? "Multi-city sweep failed."); setLoading(false); return; }
       setLeads(data.leads);
+      autoEnrichAll(data.leads);
       setResolvedLocation(data.location ?? "Multi-city sweep");
       if (data.citiesFailed?.length) {
         setError(`Couldn't resolve: ${data.citiesFailed.join(", ")}`);
@@ -168,6 +170,7 @@ export default function Dashboard() {
       const data = await res.json();
       if (!res.ok) { setError(data.error ?? "Sweep failed."); setLoading(false); return; }
       setLeads(data.leads);
+      autoEnrichAll(data.leads);
       setResolvedLocation(data.location ?? "National sweep");
     } catch {
       setError("Something went wrong running the national sweep.");
@@ -215,6 +218,52 @@ export default function Dashboard() {
       // sequential to be polite to target sites
       await enrichOne(t.sourceId);
     }
+  }
+
+  async function enrichOneSilent(sourceId: string, website: string) {
+    setLeads((prev) =>
+      prev.map((l) => (l.sourceId === sourceId ? { ...l, enriching: true } : l))
+    );
+    try {
+      const res = await fetch("/api/enrich", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ website }),
+      });
+      const data = await res.json();
+      setLeads((prev) =>
+        prev.map((l) =>
+          l.sourceId === sourceId
+            ? {
+                ...l,
+                enriching: false,
+                enrichedEmails: data.emails ?? [],
+                enrichedPhones: data.phones ?? [],
+                socials: data.socials ?? {},
+                email: l.email ?? data.emails?.[0] ?? null,
+              }
+            : l
+        )
+      );
+    } catch {
+      setLeads((prev) =>
+        prev.map((l) => (l.sourceId === sourceId ? { ...l, enriching: false } : l))
+      );
+    }
+  }
+
+  async function autoEnrichAll(newLeads: { sourceId: string; website?: string | null }[]) {
+    const targets = newLeads.filter((l) => l.website);
+    const CONCURRENCY = 3;
+    let i = 0;
+    async function worker() {
+      while (i < targets.length) {
+        const idx = i++;
+        const t = targets[idx];
+        if (t.website) await enrichOneSilent(t.sourceId, t.website);
+      }
+    }
+    await Promise.all(Array.from({ length: CONCURRENCY }, worker));
   }
 
   async function saveToDb() {
